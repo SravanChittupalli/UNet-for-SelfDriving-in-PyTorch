@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+
+<!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>UNet Explained!!! | UNet-in-PyTorch</title>
+<meta name="generator" content="Jekyll v3.9.0" />
+<meta property="og:title" content="UNet Explained!!!" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="UNet implementation in pytorch along with annotated research paper and a blog explaining UNet architecture and the concepts used in the implemntation to improve the model." />
+<meta property="og:description" content="UNet implementation in pytorch along with annotated research paper and a blog explaining UNet architecture and the concepts used in the implemntation to improve the model." />
+<link rel="canonical" href="http://localhost:4000/blog/Unet-explained.html" />
+<meta property="og:url" content="http://localhost:4000/blog/Unet-explained.html" />
+<meta property="og:site_name" content="UNet-in-PyTorch" />
+<script type="application/ld+json">
+{"@type":"WebPage","headline":"UNet Explained!!!","description":"UNet implementation in pytorch along with annotated research paper and a blog explaining UNet architecture and the concepts used in the implemntation to improve the model.","url":"http://localhost:4000/blog/Unet-explained.html","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#157878">
+    <link rel="stylesheet" href="/assets/css/style.css?v=49178e257781d765cb8cbf68e4b5035e31d8e443">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">UNet-in-PyTorch</h1>
+      <h2 class="project-tagline">UNet implementation in pytorch along with annotated research paper and a blog explaining UNet architecture and the concepts used in the implemntation to improve the model.</h2>
+      
+        <a href="https://github.com/SravanChittupalli/UNet-in-PyTorch" class="btn">View on GitHub</a>
+      
+      
+    </section>
+
+    <section class="main-content">
+      <h1 id="unet-explained">UNet Explained!!!</h1>
+
+<h2 id="1-introduction">1) Introduction</h2>
+<p>There are different tasks in computer vision some of them are listed below:</p>
+<ul>
+  <li>Classification</li>
+  <li>Localization</li>
+  <li>Semantic Segmentation</li>
+  <li>Instance Segmentation</li>
+</ul>
+
+<p><img src="/blog/assets/typesofCV.png" alt="TypesOfCV" /></p>
+
+<p><br />
+In this blog we will be doing semantic segmentation i.e the 1st picture from left in <code class="language-plaintext highlighter-rouge">fig1</code>. Image Segmentation is the part of computer vision that comes closest to human vision system. In image segmentation we segregate each pixel into classes. This is how humans percieve their environment. Actually there is an advanced form of semantic segmentation known as instance segmentation i.e the first image from right in <code class="language-plaintext highlighter-rouge">fig1</code>, that is actually the closest we get to human vision system.</p>
+
+<p>Let’s understand the difference between Semantic and Instance Segmentation.</p>
+
+<h2 id="2a-semantic-segmentation">2.a) Semantic Segmentation</h2>
+
+<p>The goal of semantic segmentation is to classify each pixel of the image into a class. It is a form of pixel-level prediction because each pixel in an image is classified according to a category. If we see the example we can see that pixels occupied by cows are shown with a different color than the sky or the grass.</p>
+
+<p><img src="/blog/assets/semanticseg.png" alt="Semantic Segmentation" /></p>
+
+<h2 id="2b-instance-segmentation">2.b) Instance Segmentation</h2>
+
+<p>It is taking a step further from semantic segmentation. Here we even identify boundaries beteen objects of the same class. For example in the example you can see that each person is identified seperately.</p>
+
+<p><img src="/blog/assets/instanceseg.png" alt="Instance Segmentation" /></p>
+
+<h2 id="3-unet-overview">3) UNet Overview</h2>
+
+<p>Till 2015 the state of the art was a sliding window convolution network. In this a small patch of the image is taken and it is passed through a CNN which would output the class that the central pixel of the patch would belong to. You can already see how computationally expensive this method is. To solve the segmentation problem more faster and with less data <em>Olaf</em>, <em>Phillip Fischer</em> and <em>Thomas Brox</em> came up with the U-Net. This UNet won the ISBI challenge 2015 and that too with a large margin.</p>
+
+<p>The network is a progression of downsampling followed by upsampling. Downsampling is achieved by maxpooling with stride 2 and the upsampling is achieved by transposed convolutions. Finally, we can use cross entropy loss at pixel level to train this whole network through back propagation.</p>
+
+<p>The main feature that is highlighted in the paper is that UNet is fast and requires less data to train.</p>
+
+<h2 id="4-architecture">4) Architecture</h2>
+
+<p>You can see from the diagram that the architecture is in the shape of a U. This is where the name UNet came from. The architecture can be divided into 2 parts. The 1st part is an encoder and the second one is a decoder.</p>
+
+<p><img src="assets/unet-architecture.png" alt="Architecture" /></p>
+
+<ul>
+  <li>
+    <p>The contracting layers i.e the encoder part is mainly used for feature extraction. For every two unpadded 3X3 convolution and a RELU layer there is a 2X2 max pooling layer with stride 2 for down sampling. After each downsampling layer the number of channels double. This whole process is done 4 times. If the input image shape is (572X572X1) then it becomes (32X32X512) by the end of encoding part.</p>
+  </li>
+  <li>
+    <p>The bottommost layers has two 3X3 convolution layers but now there is no max pooling.</p>
+  </li>
+  <li>
+    <p>Now for the decoder part, 1st operation is a 2X2 up sampling/transpose convolution layer that reduces the number of channels by half, followed by a crop and copy operation i.e concatenation of a previous layer and then two 3X3 unpadded convolution. This whole is done 4 times.</p>
+  </li>
+  <li>
+    <p>Now for the final layer. The output from the above operations is depth convolved and the resulting depth of the layers is 2. The depth is 2 beacuse the team was making the model for a Bio medical Image Segmentation task and the number of output classes were 2. It is not compulsory to have 2 as the depth. Many people have tried with more number of classes. Each channel in the last layer contains the probability of each pixel belonging to that class.</p>
+  </li>
+</ul>
+
+<p>There are a total of 23 convolutional layers.</p>
+
+<h2 id="special-features-of-the-architecture">Special Features of the architecture</h2>
+
+<ul>
+  <li>
+    <p>The architecture on first look looks symmetrical but it is not. Due to unpadded convolutions, crop and copy and up sampling operations you can see that the output is not of the same size as the input. The output size is smaller than the input size.</p>
+  </li>
+  <li>
+    <p>The encoder part of the model is a feature extracter and stores the features in depth channels.</p>
+  </li>
+  <li>
+    <p>The upsampling part has a large number of feature channels. So feature information is passed to higher resolution layers.
+This is how the model retains the feature information that it extracted during the contraction phase.</p>
+  </li>
+  <li>
+    <p>There is trade off called as the localization and information trade off. The reason is that large image patches require many down sampling layers that reduce the localization accuracy. Now to solve this problem the architects of the model have thought of upsampling from the bottommost layer and then applying a <code class="language-plaintext highlighter-rouge">crop and copy</code> operation. What this does is that it passes on the localization information from the encoder path to the decoder path.</p>
+  </li>
+  <li>
+    <p>We can see that we are cropping the output of the encoder before concatenating with a decoder layer as both the sizes are not the same.</p>
+  </li>
+</ul>
+
+<h2 id="overlap-tile-strategy">Overlap Tile Strategy</h2>
+
+
+      <footer class="site-footer">
+        
+          <span class="site-footer-owner"><a href="https://github.com/SravanChittupalli/UNet-in-PyTorch">UNet-in-PyTorch</a> is maintained by <a href="https://github.com/SravanChittupalli">SravanChittupalli</a>.</span>
+        
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </section>
+
+    
+  </body>
+</html>
